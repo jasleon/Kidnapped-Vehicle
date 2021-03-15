@@ -64,7 +64,30 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+  for (auto& p : particles) {
+    // Previous position and heading of the particle
+    double x_0 = p.x;
+    double y_0 = p.y;
+    double theta_0 = p.theta;
 
+    // Use the motion model to predict where the particle will be at the next
+    // time step
+    double theta_f = theta_0 + yaw_rate * delta_t;
+    double x_f = x_0 + velocity * (sin(theta_f) - sin(theta_0)) /
+                           std::max(yaw_rate, 0.0001);
+    double y_f = y_0 + velocity * (cos(theta_0) - cos(theta_f)) /
+                           std::max(yaw_rate, 0.0001);
+
+    // Create normal distributions centered on predicted values
+    normal_distribution<double> dist_x(x_f, std_pos[0]);
+    normal_distribution<double> dist_y(y_f, std_pos[1]);
+    normal_distribution<double> dist_theta(theta_f, std_pos[2]);
+
+    // Realize distributions to add noise
+    p.x = dist_x(gen);
+    p.y = dist_y(gen);
+    p.theta = dist_theta(gen);
+  }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
