@@ -22,6 +22,7 @@ using std::string;
 using std::vector;
 using std::normal_distribution;
 using std::default_random_engine;
+using std::numeric_limits;
 
 static default_random_engine gen;
 
@@ -98,7 +99,16 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
-
+  for (auto& obs : observations) {
+    double closest = numeric_limits<double>::max();
+    for (const auto& pre : predicted) {
+      double distance = dist(obs.x, obs.y, pre.x, pre.y);
+      if (distance < closest) {
+        obs.id = pre.id;
+        closest = distance;
+      }
+    }
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
