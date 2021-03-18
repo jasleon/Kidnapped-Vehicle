@@ -127,7 +127,53 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+  const double std_x = std_landmark[0];
+  const double std_y = std_landmark[1];
+  double all_weights = 0;
 
+  for (auto& p : particles) {
+    vector<LandmarkObs> predictions;
+    for (const auto& l : map_landmarks.landmark_list) {
+      double distance = dist(p.x, p.y, l.x_f, l.y_f);
+      if (distance < sensor_range) {
+        LandmarkObs prediction;
+        prediction.id = l.id_i;
+        prediction.x = l.x_f;
+        prediction.y = l.y_f;
+        predictions.push_back(prediction);
+      }
+    }
+
+    vector<LandmarkObs> trans_observations(observations);
+    for (auto& obs : trans_observations) {
+      double x_m = p.x + (cos(p.theta) * obs.x) - (sin(p.theta) * obs.y);
+      double y_m = p.y + (sin(p.theta) * obs.x) - (cos(p.theta) * obs.y);
+      obs.x = x_m;
+      obs.y = y_m;
+    }
+
+    dataAssociation(predictions, trans_observations);
+
+    double weight = 1;
+    for (const auto& obs : trans_observations) {
+      double mu_x, mu_y;
+      for (const auto& pre : predictions) {
+        if (pre.id == obs.id) {
+          mu_x = pre.x;
+          mu_y = pre.y;
+          break;
+        }
+      }
+      weight *= multiv_prob(std_x, std_y, obs.x, obs.y, mu_x, mu_y);
+    }
+
+    p.weight = weight;
+    all_weights += weight;
+  }
+
+  for (auto& p : particles) {
+    p.weight /= all_weights;
+  }
 }
 
 void ParticleFilter::resample() {
