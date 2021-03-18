@@ -23,6 +23,7 @@ using std::vector;
 using std::normal_distribution;
 using std::default_random_engine;
 using std::numeric_limits;
+using std::discrete_distribution;
 
 static default_random_engine gen;
 
@@ -35,7 +36,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 1000;  // TODO: Set the number of particles
+  num_particles = 100;  // TODO: Set the number of particles
 
   normal_distribution<double> dist_x(x, std[0]);
   normal_distribution<double> dist_y(y, std[1]);
@@ -183,7 +184,20 @@ void ParticleFilter::resample() {
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
+  vector<double> weights;
+  for (const auto& p : particles) {
+    weights.push_back(p.weight);
+  }
+  
+  discrete_distribution<int> dist(weights.begin(), weights.end());
+  
+  vector<Particle> resampled;
+  for (int i = 0; i < num_particles; ++i) {
+    int j = dist(gen);
+    resampled.push_back(particles[j]);
+  }
 
+  particles = resampled;
 }
 
 void ParticleFilter::SetAssociations(Particle& particle, 
