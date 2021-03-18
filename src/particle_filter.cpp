@@ -155,7 +155,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     vector<LandmarkObs> trans_observations(observations);
     for (auto& obs : trans_observations) {
       double x_m = p.x + (cos(p.theta) * obs.x) - (sin(p.theta) * obs.y);
-      double y_m = p.y + (sin(p.theta) * obs.x) - (cos(p.theta) * obs.y);
+      double y_m = p.y + (sin(p.theta) * obs.x) + (cos(p.theta) * obs.y);
       obs.x = x_m;
       obs.y = y_m;
     }
