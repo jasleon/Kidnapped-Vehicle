@@ -74,16 +74,23 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
 
     // Use the motion model to predict where the particle will be at the next
     // time step
-    double theta_f = theta_0 + yaw_rate * delta_t;
-    double x_f = x_0 + velocity * (sin(theta_f) - sin(theta_0)) / yaw_rate;
-    double y_f = y_0 + velocity * (cos(theta_0) - cos(theta_f)) / yaw_rate;
+    double x_f, y_f, theta_f;
+    if (abs(yaw_rate) < 1e-3) {
+      theta_f = theta_0;
+      x_f = x_0 + velocity * delta_t * cos(theta_0);
+      y_f = y_0 + velocity * delta_t * sin(theta_0);
+    } else {
+      theta_f = theta_0 + yaw_rate * delta_t;
+      x_f = x_0 + velocity * (sin(theta_f) - sin(theta_0)) / yaw_rate;
+      y_f = y_0 + velocity * (cos(theta_0) - cos(theta_f)) / yaw_rate;
+    }
 
     // Create normal distributions centered on predicted values
     normal_distribution<double> dist_x(x_f, std_pos[0]);
     normal_distribution<double> dist_y(y_f, std_pos[1]);
     normal_distribution<double> dist_theta(theta_f, std_pos[2]);
 
-    // Realize distributions to add noise
+    // Realize normal distributions
     p.x = dist_x(gen);
     p.y = dist_y(gen);
     p.theta = dist_theta(gen);
