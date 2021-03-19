@@ -139,7 +139,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   const double std_y = std_landmark[1];
   double all_weights = 0;
 
+  // Iterate through the particles
   for (auto& p : particles) {
+    // Find landmarks within sensor range relative to the current particle
     vector<LandmarkObs> predictions;
     for (const auto& l : map_landmarks.landmark_list) {
       double distance = dist(p.x, p.y, l.x_f, l.y_f);
@@ -152,6 +154,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       }
     }
 
+    // Transform observations to the map's coordinate system
     vector<LandmarkObs> trans_observations(observations);
     for (auto& obs : trans_observations) {
       double x_m = p.x + (cos(p.theta) * obs.x) - (sin(p.theta) * obs.y);
@@ -162,9 +165,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     dataAssociation(predictions, trans_observations);
 
+    // Calculate the particles final weight as the product of each measurement's
+    // Multivariate-Gaussian probability density.
     double weight = 1;
     for (const auto& obs : trans_observations) {
       double mu_x, mu_y;
+      // Find the prediction associated with the current measurement
       for (const auto& pre : predictions) {
         if (pre.id == obs.id) {
           mu_x = pre.x;
@@ -175,10 +181,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       weight *= multiv_prob(std_x, std_y, obs.x, obs.y, mu_x, mu_y);
     }
 
+    // Update the particle's weight and normalization factor
     p.weight = weight;
     all_weights += weight;
-  }
+  }  // Iterate through the particles
 
+  // Normalize weights
   for (auto& p : particles) {
     p.weight /= all_weights;
   }
